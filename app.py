@@ -1,54 +1,65 @@
 import streamlit as st
 import pickle
-#import the model
+import numpy as np
 
-pipe = pickle.load(open('pipe.pkl','rb'))
+# import the model
+pipe = pickle.load(open('pipe12.pkl','rb'))
 df = pickle.load(open('df.pkl','rb'))
-
 
 st.title("Laptop Predictor")
 
-#brand
+# brand
 company = st.selectbox('Brand',df['Company'].unique())
 
-#Type
+# type of laptop
 type = st.selectbox('Type',df['TypeName'].unique())
 
-#Ram
+# Ram
+ram = st.selectbox('RAM(in GB)',[2,4,6,8,12,16,24,32,64])
 
-type = st.selectbox('Ram(in GB)',[2,4,6,8,12,16,24,32,64])
-
-#weight
-
+# weight
 weight = st.number_input('Weight of the Laptop')
 
-# TouchScreen
+# Touchscreen
+touchscreen = st.selectbox('Touchscreen',['No','Yes'])
 
-Touchscreen = st.selectbox('Tounchscreen',['No','Yes'])
+# IPS
+ips = st.selectbox('IPS',['No','Yes'])
 
-#IPS
-IPS = st.selectbox('IPS',['No','Yes'])
+# screen size
+screen_size = st.number_input('Screen Size')
 
-#Screen Size
-
-Screen_size = st.number_input('Screen size')
-
-#resolution
-
-resolution = st.selectbox('Screen Resolution',['1920x1080','1366x768','1600x900','3840x2160','2880x1800','2560x1440','2304x1440'])
+# resolution
+resolution = st.selectbox('Screen Resolution',['1920x1080','1366x768','1600x900','3840x2160','3200x1800','2880x1800','2560x1600','2560x1440','2304x1440'])
 
 #cpu
-cpu = st.selectbox('Brand',df['Cpu Brand'].unique())
+cpu = st.selectbox('CPU',df['Cpu_brand'].unique())
 
-#HDD
+hdd = st.selectbox('HDD(in GB)',[0,128,256,512,1024,2048])
 
-hdd = st.selectbox('HDD(in GB)',df['0,128,256,512,1024,2048'].unique())
+ssd = st.selectbox('SSD(in GB)',[0,8,128,256,512,1024])
 
-ssd = st.selectbox('SSD(in GB)',df['0,128,256,512,1024'].unique())
-
-gpu = st.selectbox('Gpu',df['Gpu brand'].unique())
+gpu = st.selectbox('GPU',df['Gpu_brand'].unique())
 
 os = st.selectbox('OS',df['os'].unique())
 
 if st.button('Predict Price'):
-    pass
+    # query
+    ppi = None
+    if touchscreen == 'Yes':
+        touchscreen = 1
+    else:
+        touchscreen = 0
+
+    if ips == 'Yes':
+        ips = 1
+    else:
+        ips = 0
+
+    X_res = int(resolution.split('x')[0])
+    Y_res = int(resolution.split('x')[1])
+    ppi = ((X_res**2) + (Y_res**2))**0.5/screen_size
+    query = np.array([company,type,ram,weight,touchscreen,ips,ppi,cpu,hdd,ssd,gpu,os])
+
+    query = query.reshape(1,12)
+    st.title("The predicted price of this configuration is  : ₹ " + str(int(np.exp(pipe.predict(query)[0]))))
